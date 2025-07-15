@@ -17,7 +17,7 @@ interface QuizSessionProps {
 export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const { questions } = quizData;
+  const { questions, title } = quizData;
   const currentQuestion = questions[currentQuestionIndex];
 
   const handleAnswerChange = (value: string) => {
@@ -49,7 +49,8 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-lg animate-fade-in">
       <CardHeader>
-        <Progress value={progress} className="w-full" />
+        <CardTitle className="text-lg font-semibold text-center text-muted-foreground">{title}</CardTitle>
+        <Progress value={progress} className="w-full mt-2" />
         <CardDescription className="text-center pt-4">
           Question {currentQuestionIndex + 1} of {questions.length}
         </CardDescription>

@@ -6,6 +6,7 @@ export interface QuizQuestion {
 }
 
 export interface QuizData {
+  title: string;
   questions: QuizQuestion[];
   accuracyAssessment: string;
 }
