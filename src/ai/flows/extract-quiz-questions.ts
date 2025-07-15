@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -60,9 +61,10 @@ const extractQuizQuestionsFlow = ai.defineFlow(
   async input => {
     const {output} = await extractQuizQuestionsPrompt(input);
     if (output?.questions) {
-      // Filter out any empty objects that the model might return.
-      output.questions = output.questions.filter(q => q.questionNumber && q.questionText && q.options);
+      // Filter out any empty or incomplete objects that the model might return.
+      output.questions = output.questions.filter(q => q && q.questionNumber && q.questionText && q.options);
     }
     return output!;
   }
 );
+
