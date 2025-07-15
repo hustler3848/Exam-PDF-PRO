@@ -76,6 +76,27 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
     });
   };
 
+  const renderMath = (text: string) => {
+    if (text.includes('$')) {
+        // For BlockMath, we'll split by $$ and process segments
+        const segments = text.split(/(\$\$[^`]+\$\$)/g).filter(Boolean);
+        return segments.map((segment, index) => {
+            if (segment.startsWith('$$') && segment.endsWith('$$')) {
+                return <BlockMath key={index} math={segment.slice(2, -2)} />;
+            }
+            // For InlineMath, we'll split by $
+            const inlineSegments = segment.split(/(\$[^`]+\$)/g).filter(Boolean);
+            return inlineSegments.map((inlineSegment, inlineIndex) => {
+                if (inlineSegment.startsWith('$') && inlineSegment.endsWith('$')) {
+                    return <InlineMath key={`${index}-${inlineIndex}`} math={inlineSegment.slice(1, -1)} />;
+                }
+                return <span key={`${index}-${inlineIndex}`}>{inlineSegment}</span>;
+            });
+        });
+    }
+    return <span>{text}</span>;
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-lg animate-fade-in">
       <CardHeader>
@@ -100,8 +121,9 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                       name={`answers.${index}.correctAnswer`}
                       render={({ field }) => (
                         <FormItem className="p-4 border rounded-lg">
-                          <FormLabel className="font-question text-base">
-                            {question.questionNumber}. <InlineMath math={question.questionText} />
+                          <FormLabel className="font-question text-base flex items-start gap-2">
+                             <span>{question.questionNumber}.</span> 
+                             <div className="flex-1">{renderMath(question.questionText)}</div>
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -115,7 +137,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                             <SelectContent>
                               {question.options.map((option, i) => (
                                 <SelectItem key={i} value={option}>
-                                  <InlineMath math={option} />
+                                  {renderMath(option)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
