@@ -30,7 +30,7 @@ export function SavedQuizzesDialog({
 }: SavedQuizzesDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg px-4 sm:px-6">
         <DialogHeader>
           <DialogTitle>Saved Quizzes</DialogTitle>
           <DialogDescription>
