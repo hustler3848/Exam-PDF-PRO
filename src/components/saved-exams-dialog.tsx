@@ -10,55 +10,55 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QuizData } from "@/types/quiz";
+import type { ExamData } from "@/types/exam";
 import { Play, Trash2 } from "lucide-react";
 
-interface SavedQuizzesDialogProps {
+interface SavedExamsDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  quizzes: QuizData[];
-  onPlay: (quiz: QuizData) => void;
-  onDelete: (quiz: QuizData) => void;
+  exams: ExamData[];
+  onPlay: (exam: ExamData) => void;
+  onDelete: (exam: ExamData) => void;
 }
 
-export function SavedQuizzesDialog({
+export function SavedExamsDialog({
   isOpen,
   onOpenChange,
-  quizzes,
+  exams,
   onPlay,
   onDelete,
-}: SavedQuizzesDialogProps) {
+}: SavedExamsDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg px-4 sm:px-6">
         <DialogHeader>
-          <DialogTitle>Saved Quizzes</DialogTitle>
+          <DialogTitle>Saved Exams</DialogTitle>
           <DialogDescription>
-            Select a quiz to play or delete it.
+            Select a exam to play or delete it.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-72">
           <div className="space-y-4 pr-6">
-            {quizzes.length > 0 ? (
-              quizzes.map((quiz, index) => (
+            {exams.length > 0 ? (
+              exams.map((exam, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                 >
                   <div className="flex-1 overflow-hidden">
-                    <p className="font-semibold truncate" title={quiz.title}>
-                      {quiz.title}
+                    <p className="font-semibold truncate" title={exam.title}>
+                      {exam.title}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {quiz.questions.length} questions
+                      {exam.questions.length} questions
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onPlay(quiz)}
-                      aria-label={`Play quiz ${quiz.title}`}
+                      onClick={() => onPlay(exam)}
+                      aria-label={`Play exam ${exam.title}`}
                     >
                       <Play className="h-5 w-5 text-success" />
                       <span className="sr-only">Play</span>
@@ -66,8 +66,8 @@ export function SavedQuizzesDialog({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onDelete(quiz)}
-                      aria-label={`Delete quiz ${quiz.title}`}
+                      onClick={() => onDelete(exam)}
+                      aria-label={`Delete exam ${exam.title}`}
                     >
                       <Trash2 className="h-5 w-5 text-destructive" />
                       <span className="sr-only">Delete</span>
@@ -77,7 +77,7 @@ export function SavedQuizzesDialog({
               ))
             ) : (
               <p className="text-center text-muted-foreground py-8">
-                You have no saved quizzes.
+                You have no saved exams.
               </p>
             )}
           </div>

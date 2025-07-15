@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import type { QuizData } from "@/types/quiz";
+import type { ExamData } from "@/types/exam";
 import {
   Card,
   CardContent,
@@ -28,13 +28,16 @@ import { Label as UiLabel } from "./ui/label";
 import { InlineMath, BlockMath } from 'react-katex';
 
 
-interface QuizResultsProps {
-  quizData: QuizData;
+interface ExamResultsProps {
+  examData: ExamData;
   userAnswers: Record<number, string>;
   onRestart: () => void;
 }
 
 const MathRenderer = ({ text }: { text: string }) => {
+   if (typeof text !== 'string') {
+    return null;
+  }
   const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
 
   return (
@@ -51,13 +54,13 @@ const MathRenderer = ({ text }: { text: string }) => {
   );
 };
 
-export function QuizResults({
-  quizData,
+export function ExamResults({
+  examData,
   userAnswers,
-}: QuizResultsProps) {
+}: ExamResultsProps) {
   const [showOnlyIncorrect, setShowOnlyIncorrect] = useState(false);
 
-  const { questions } = quizData;
+  const { questions } = examData;
   const score = questions.reduce((acc, q) => {
     return userAnswers[q.questionNumber] === q.correctAnswer ? acc + 1 : acc;
   }, 0);
@@ -77,8 +80,8 @@ export function QuizResults({
     <div className="space-y-6 animate-fade-in">
       <Card className="shadow-lg">
         <CardHeader className="items-center">
-          <CardTitle className="text-3xl font-headline">Quiz Complete!</CardTitle>
-          <CardDescription>Here's how you did on {quizData.title}.</CardDescription>
+          <CardTitle className="text-3xl font-headline">Exam Complete!</CardTitle>
+          <CardDescription>Here's how you did on {examData.title}.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="h-[200px] w-[200px]">

@@ -5,8 +5,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import 'katex/dist/katex.min.css';
 
 export const metadata: Metadata = {
-  title: 'Quiz PDF Pro',
-  description: 'Upload a PDF to start a quiz session.',
+  title: 'Exam PDF Pro',
+  description: 'Upload a PDF to start a exam session.',
 };
 
 export default function RootLayout({

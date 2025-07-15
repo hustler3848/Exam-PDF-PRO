@@ -1,4 +1,4 @@
-export interface QuizQuestion {
+export interface ExamQuestion {
   questionNumber: number;
   questionText: string;
   options: string[];
@@ -12,9 +12,9 @@ export interface ExtractedQuestion {
   options: string[];
 }
 
-export interface QuizData {
+export interface ExamData {
   title: string;
-  questions: QuizQuestion[];
+  questions: ExamQuestion[];
   // The accuracy assessment from the user's perspective of the answer key
   accuracyAssessment: string; 
 }

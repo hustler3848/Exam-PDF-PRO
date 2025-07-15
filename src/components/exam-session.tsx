@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import type { QuizData } from "@/types/quiz";
+import type { ExamData } from "@/types/exam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,12 +11,15 @@ import { ArrowLeft, ArrowRight, TimerIcon } from "lucide-react";
 import { InlineMath, BlockMath } from 'react-katex';
 import { cn } from "@/lib/utils";
 
-interface QuizSessionProps {
-  quizData: QuizData;
+interface ExamSessionProps {
+  examData: ExamData;
   onSubmit: (answers: Record<number, string>) => void;
 }
 
 const MathRenderer = ({ text }: { text: string }) => {
+   if (typeof text !== 'string') {
+    return null;
+  }
   const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
 
   return (
@@ -34,10 +37,10 @@ const MathRenderer = ({ text }: { text: string }) => {
 };
 
 
-export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
+export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const { questions, title } = quizData;
+  const { questions, title } = examData;
   const currentQuestion = questions[currentQuestionIndex];
 
   const handleAnswerChange = (value: string) => {
@@ -110,7 +113,7 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
             </Button>
             {isLastQuestion ? (
               <Button onClick={handleSubmit} className="bg-success hover:bg-success/90">
-                Finish Quiz
+                Finish Exam
               </Button>
             ) : (
               <Button onClick={goToNext}>

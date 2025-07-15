@@ -47,7 +47,7 @@ export function PdfUpload({ onUpload, isProcessing }: PdfUploadProps) {
   return (
     <Card className="w-full max-w-lg mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center">Upload your Quiz PDF</CardTitle>
+        <CardTitle className="text-2xl font-headline text-center">Upload your Exam PDF</CardTitle>
         <CardDescription className="text-center">
           Drag & drop your file here or click to browse.
         </CardDescription>
@@ -87,7 +87,7 @@ export function PdfUpload({ onUpload, isProcessing }: PdfUploadProps) {
               Processing...
             </>
           ) : (
-            "Extract Quiz"
+            "Extract Exam"
           )}
         </Button>
       </CardContent>
