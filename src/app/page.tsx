@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, FileUp, Loader2, Save, Play, Library } from "lucide-react";
+import { BookOpen, FileUp, Save, Play, Library } from "lucide-react";
 import { extractQuizQuestions } from "@/ai/flows/extract-quiz-questions";
 import type { QuizData, ExtractedQuestion } from "@/types/quiz";
 import { PdfUpload } from "@/components/pdf-upload";
@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SavedQuizzesDialog } from "@/components/saved-quizzes-dialog";
+import { ProcessingAnimation } from "@/components/processing-animation";
 
 type AppStatus = "upload" | "processing" | "answer_key" | "ready" | "quiz" | "results";
 
@@ -98,11 +99,9 @@ export default function Home() {
       const existingQuizIndex = savedQuizzes.findIndex(q => q.title === quizData.title);
       let newSavedQuizzes;
       if (existingQuizIndex > -1) {
-        // Update existing quiz
         newSavedQuizzes = [...savedQuizzes];
         newSavedQuizzes[existingQuizIndex] = quizData;
       } else {
-        // Add new quiz
         newSavedQuizzes = [...savedQuizzes, quizData];
       }
       
@@ -177,15 +176,7 @@ export default function Home() {
           </div>
         );
       case "processing":
-        return (
-          <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <h2 className="text-xl font-semibold">Extracting Questions...</h2>
-            <p className="text-muted-foreground">
-              Our AI is analyzing your document. This may take a few moments.
-            </p>
-          </div>
-        );
+        return <ProcessingAnimation />;
       case "answer_key":
         return extractedQuestions && <AnswerKeyForm extractedQuestions={extractedQuestions.questions} onSubmit={handleAnswerKeySubmit} title={extractedQuestions.title} />;
       case "ready":

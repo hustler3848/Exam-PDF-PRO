@@ -74,3 +74,32 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .processing-animation .doc-in {
+    animation: doc-in 1.5s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  }
+  .processing-animation .scanner {
+    animation: scanner 1.5s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  }
+  .processing-animation .doc-out {
+    animation: doc-out 1.5s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  }
+
+  @keyframes doc-in {
+    0%, 20% { transform: translateY(0); }
+    40%, 100% { transform: translateY(-100%); }
+  }
+
+  @keyframes scanner {
+    0%, 20% { transform: scaleX(0); }
+    30% { transform: scaleX(1); }
+    70%, 100% { transform: scaleX(1); opacity: 0;}
+  }
+
+  @keyframes doc-out {
+    0%, 50% { transform: translate(0, 0) scale(1); }
+    70% { transform: translate(110%, 20%) scale(0.7); }
+    90%, 100% { transform: translate(110%, 20%) scale(0.7) translateY(calc(var(--y-offset, 0) * 1px)); }
+  }
+}
