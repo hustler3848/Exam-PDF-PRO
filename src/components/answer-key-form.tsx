@@ -51,6 +51,9 @@ type AnswerKeyFormData = z.infer<typeof formSchema>;
 
 
 const MathRenderer = ({ text }: { text: string }) => {
+  if (typeof text !== 'string') {
+    return null;
+  }
   const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
 
   return (
@@ -133,7 +136,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {question.options.map((option, i) => (
+                              {question.options.filter(opt => opt && opt.trim() !== '').map((option, i) => (
                                 <SelectItem key={i} value={option}>
                                   <MathRenderer text={option} />
                                 </SelectItem>
