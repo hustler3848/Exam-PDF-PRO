@@ -16,6 +16,24 @@ interface QuizSessionProps {
   onSubmit: (answers: Record<number, string>) => void;
 }
 
+const MathRenderer = ({ text }: { text: string }) => {
+  const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+          return <BlockMath key={index} math={part.slice(2, -2)} />;
+        } else if (part.startsWith('$') && part.endsWith('$')) {
+          return <InlineMath key={index} math={part.slice(1, -1)} />;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
+
+
 export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -60,7 +78,7 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
             <CardDescription className="text-primary font-semibold uppercase tracking-wider">{title}</CardDescription>
             <CardTitle className="font-question text-xl md:text-2xl pt-2">
               <span className="font-semibold text-muted-foreground mr-2">Question No. {currentQuestion.questionNumber}</span>
-              <BlockMath math={currentQuestion.questionText} />
+              <MathRenderer text={currentQuestion.questionText} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -76,7 +94,7 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
                   className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer text-base"
                 >
                   <RadioGroupItem value={option} id={`option-${index}`} />
-                  <span><InlineMath math={option} /></span>
+                  <span><MathRenderer text={option} /></span>
                 </Label>
               ))}
             </RadioGroup>

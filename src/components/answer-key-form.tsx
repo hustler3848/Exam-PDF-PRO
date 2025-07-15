@@ -49,6 +49,25 @@ const formSchema = z.object({
 
 type AnswerKeyFormData = z.infer<typeof formSchema>;
 
+
+const MathRenderer = ({ text }: { text: string }) => {
+  const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+          return <BlockMath key={index} math={part.slice(2, -2)} />;
+        } else if (part.startsWith('$') && part.endsWith('$')) {
+          return <InlineMath key={index} math={part.slice(1, -1)} />;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
+
+
 export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKeyFormProps) {
   const { toast } = useToast();
   const form = useForm<AnswerKeyFormData>({
@@ -74,27 +93,6 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
         title: "Answer Key Submitted!",
         description: "Your quiz is now ready to be played or saved.",
     });
-  };
-
-  const renderMath = (text: string) => {
-    if (text.includes('$')) {
-        // For BlockMath, we'll split by $$ and process segments
-        const segments = text.split(/(\$\$[^`]+\$\$)/g).filter(Boolean);
-        return segments.map((segment, index) => {
-            if (segment.startsWith('$$') && segment.endsWith('$$')) {
-                return <BlockMath key={index} math={segment.slice(2, -2)} />;
-            }
-            // For InlineMath, we'll split by $
-            const inlineSegments = segment.split(/(\$[^`]+\$)/g).filter(Boolean);
-            return inlineSegments.map((inlineSegment, inlineIndex) => {
-                if (inlineSegment.startsWith('$') && inlineSegment.endsWith('$')) {
-                    return <InlineMath key={`${index}-${inlineIndex}`} math={inlineSegment.slice(1, -1)} />;
-                }
-                return <span key={`${index}-${inlineIndex}`}>{inlineSegment}</span>;
-            });
-        });
-    }
-    return <span>{text}</span>;
   };
 
   return (
@@ -123,7 +121,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                         <FormItem className="p-4 border rounded-lg">
                           <FormLabel className="font-question text-base flex items-start gap-2">
                              <span>{question.questionNumber}.</span> 
-                             <div className="flex-1">{renderMath(question.questionText)}</div>
+                             <div className="flex-1"><MathRenderer text={question.questionText} /></div>
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -137,7 +135,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                             <SelectContent>
                               {question.options.map((option, i) => (
                                 <SelectItem key={i} value={option}>
-                                  {renderMath(option)}
+                                  <MathRenderer text={option} />
                                 </SelectItem>
                               ))}
                             </SelectContent>

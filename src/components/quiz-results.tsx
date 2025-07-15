@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -32,6 +33,23 @@ interface QuizResultsProps {
   userAnswers: Record<number, string>;
   onRestart: () => void;
 }
+
+const MathRenderer = ({ text }: { text: string }) => {
+  const parts = text.split(/(\${1,2}[^$]+\${1,2})/g);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+          return <BlockMath key={index} math={part.slice(2, -2)} />;
+        } else if (part.startsWith('$') && part.endsWith('$')) {
+          return <InlineMath key={index} math={part.slice(1, -1)} />;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
 
 export function QuizResults({
   quizData,
@@ -121,14 +139,14 @@ export function QuizResults({
                   key={q.questionNumber}
                 >
                   <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-3 text-left">
+                    <div className="flex items-start gap-3 text-left w-full">
                       {isCorrect ? (
-                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-1" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-1" />
                       )}
-                      <span className="font-question">
-                        {q.questionNumber}. <InlineMath math={q.questionText} />
+                      <span className="font-question flex-1">
+                        {q.questionNumber}. <MathRenderer text={q.questionText} />
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -147,7 +165,7 @@ export function QuizResults({
                             )}
                           >
                              {isCorrectAnswer ? <CheckCircle2 className="h-4 w-4 text-success" /> : (isUserAnswer ? <XCircle className="h-4 w-4 text-destructive" /> : <div className="h-4 w-4"/>)}
-                            <span><InlineMath math={option} /></span>
+                            <span><MathRenderer text={option} /></span>
                             {isUserAnswer && !isCorrectAnswer && <Badge variant="destructive">Your Answer</Badge>}
                             {isCorrectAnswer && <Badge className="bg-success text-success-foreground hover:bg-success/80">Correct Answer</Badge>}
                           </div>
@@ -156,11 +174,11 @@ export function QuizResults({
                     </div>
                     {!isCorrect && userAnswer && (
                       <p className="mt-3 text-sm font-code text-destructive">
-                          Your answer: <InlineMath math={userAnswer} />
+                          Your answer: <MathRenderer text={userAnswer} />
                       </p>
                     )}
                      <p className="mt-1 text-sm font-code text-success">
-                        Correct answer: <InlineMath math={q.correctAnswer} />
+                        Correct answer: <MathRenderer text={q.correctAnswer} />
                     </p>
                   </AccordionContent>
                 </AccordionItem>
