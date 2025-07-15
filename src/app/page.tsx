@@ -4,11 +4,12 @@
 import { useState, useEffect } from "react";
 import { BookOpen, FileUp, Save, Play, Library } from "lucide-react";
 import { extractQuizQuestions } from "@/ai/flows/extract-quiz-questions";
+import { extractAnswerKey } from "@/ai/flows/extract-answer-key";
 import type { QuizData, ExtractedQuestion } from "@/types/quiz";
 import { PdfUpload } from "@/components/pdf-upload";
 import { QuizSession } from "@/components/quiz-session";
 import { QuizResults } from "@/components/quiz-results";
-import { AnswerKeyForm } from "@/components/answer-key-form";
+import { ProvideAnswerKey } from "@/components/provide-answer-key";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { SavedQuizzesDialog } from "@/components/saved-quizzes-dialog";
 import { ProcessingAnimation } from "@/components/processing-animation";
 
-type AppStatus = "upload" | "processing" | "answer_key" | "ready" | "quiz" | "results";
+type AppStatus = "upload" | "processing_quiz" | "provide_answer_key" | "processing_answers" | "ready" | "quiz" | "results";
 
 export default function Home() {
   const [status, setStatus] = useState<AppStatus>("upload");
@@ -39,7 +40,7 @@ export default function Home() {
   }, []);
 
   const handlePdfUpload = async (file: File) => {
-    setStatus("processing");
+    setStatus("processing_quiz");
     try {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -52,10 +53,10 @@ export default function Home() {
         }
         
         setExtractedQuestions({ title: file.name, questions: result.questions });
-        setStatus("answer_key");
+        setStatus("provide_answer_key");
         toast({
           title: "Extraction Complete!",
-          description: "Please provide the answer key for the extracted questions.",
+          description: `Extracted ${result.questions.length} questions. You can now provide an answer key or continue.`,
         });
       };
       reader.onerror = () => {
@@ -72,20 +73,64 @@ export default function Home() {
     }
   };
 
-  const handleAnswerKeySubmit = (answers: Record<number, string>) => {
+  const finalizeQuizData = (answers: Record<number, string> = {}) => {
     if (extractedQuestions) {
       const fullQuizData: QuizData = {
         title: extractedQuestions.title,
         questions: extractedQuestions.questions.map(q => ({
           ...q,
+          // Default to empty string if no answer is found
           correctAnswer: answers[q.questionNumber] || "",
         })),
-        accuracyAssessment: "User-provided answer key.",
+        accuracyAssessment: Object.keys(answers).length > 0 ? "AI-extracted answer key." : "No answer key provided.",
       };
       setQuizData(fullQuizData);
       setStatus("ready");
       setExtractedQuestions(null);
     }
+  };
+  
+  const handleAnswerKeyUpload = async (file: File) => {
+    setStatus("processing_answers");
+     try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const pdfDataUri = reader.result as string;
+        const result = await extractAnswerKey({ pdfDataUri });
+
+        if (!result || !result.answers) {
+          throw new Error("Could not extract any answers from the key.");
+        }
+        
+        const answerRecord = result.answers.reduce((acc, ans) => {
+            acc[ans.questionNumber] = ans.correctAnswer;
+            return acc;
+        }, {} as Record<number, string>);
+        
+        finalizeQuizData(answerRecord);
+        toast({
+            title: "Answer Key Processed!",
+            description: "Your quiz is ready to start.",
+        });
+      };
+      reader.onerror = () => {
+        throw new Error("Failed to read the answer key file.");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Answer Key Error",
+        description: e.message || "Failed to process answer key. Continuing without it.",
+      });
+      // Fallback to continue without answers
+      handleContinueWithoutAnswerKey();
+    }
+  };
+
+  const handleContinueWithoutAnswerKey = () => {
+    finalizeQuizData();
   };
 
   const handlePlayNow = () => {
@@ -175,16 +220,24 @@ export default function Home() {
             )}
           </div>
         );
-      case "processing":
+      case "processing_quiz":
         return <ProcessingAnimation />;
-      case "answer_key":
-        return extractedQuestions && <AnswerKeyForm extractedQuestions={extractedQuestions.questions} onSubmit={handleAnswerKeySubmit} title={extractedQuestions.title} />;
+      case "provide_answer_key":
+        return extractedQuestions && (
+            <ProvideAnswerKey
+              questionCount={extractedQuestions.questions.length}
+              onUploadKey={handleAnswerKeyUpload}
+              onContinue={handleContinueWithoutAnswerKey}
+            />
+        );
+       case "processing_answers":
+        return <ProcessingAnimation />;
       case "ready":
         return (
           quizData && (
             <Card className="w-full max-w-lg mx-auto shadow-lg animate-fade-in">
               <CardHeader>
-                <CardTitle className="text-2xl font-headline text-center">Quiz Ready!</CardTitle>
+                <CardTitle className="text-2xl font-headline text-center">Start Exam?</CardTitle>
                 <CardDescription className="text-center">
                   Created a quiz with {quizData.questions.length} questions from <br /> <strong>{quizData.title}</strong>
                 </CardDescription>
@@ -192,11 +245,11 @@ export default function Home() {
               <CardContent className="flex flex-col sm:flex-row items-center gap-4 justify-center">
                 <Button onClick={handlePlayNow} size="lg" className="w-full sm:w-auto">
                   <Play className="mr-2" />
-                  Play Now
+                  Start Exam
                 </Button>
                 <Button onClick={handleSaveForLater} size="lg" variant="outline" className="w-full sm:w-auto">
                    <Save className="mr-2" />
-                  Save for Later
+                  Save Exam
                 </Button>
               </CardContent>
             </Card>
@@ -231,7 +284,7 @@ export default function Home() {
         <div className="flex-grow" />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {(status !== "upload" && status !== "processing") && (
+          {(status !== "upload" && status !== "processing_quiz") && (
             <Button onClick={handleRestart} variant="outline">
               Start New Quiz
             </Button>
