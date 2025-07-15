@@ -43,6 +43,8 @@ const extractQuizQuestionsPrompt = ai.definePrompt({
   output: {schema: ExtractQuizQuestionsOutputSchema},
   prompt: `You are an expert quiz question extractor. Your task is to extract quiz questions, answer options, and correct answers from a PDF document.
 
+  It is critical that you extract ALL questions from the document. Carefully scan every page to ensure no questions are missed.
+
   Analyze the PDF document and identify the questions, question numbers, options, and correct answers. Pay close attention to the formatting and structure of the document to accurately extract the information. Also evaluate the accuracy of the extracted questions and generate an accuracy assessment.
 
   PDF Document: {{media url=pdfDataUri}}
