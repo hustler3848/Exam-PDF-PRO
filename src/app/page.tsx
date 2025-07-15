@@ -2,24 +2,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, FileUp, Loader2, AlertTriangle, Save, Play, Library } from "lucide-react";
+import { BookOpen, FileUp, Loader2, Save, Play, Library } from "lucide-react";
 import { extractQuizQuestions } from "@/ai/flows/extract-quiz-questions";
-import type { QuizData } from "@/types/quiz";
+import type { QuizData, ExtractedQuestion } from "@/types/quiz";
 import { PdfUpload } from "@/components/pdf-upload";
 import { QuizSession } from "@/components/quiz-session";
 import { QuizResults } from "@/components/quiz-results";
+import { AnswerKeyForm } from "@/components/answer-key-form";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SavedQuizzesDialog } from "@/components/saved-quizzes-dialog";
 
-type AppStatus = "upload" | "processing" | "ready" | "quiz" | "results";
+type AppStatus = "upload" | "processing" | "answer_key" | "ready" | "quiz" | "results";
 
 export default function Home() {
   const [status, setStatus] = useState<AppStatus>("upload");
   const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [extractedQuestions, setExtractedQuestions] = useState<{title: string, questions: ExtractedQuestion[]} | null>(null);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [savedQuizzes, setSavedQuizzes] = useState<QuizData[]>([]);
   const [isSavedQuizzesDialogOpen, setIsSavedQuizzesDialogOpen] = useState(false);
@@ -43,20 +44,17 @@ export default function Home() {
       reader.readAsDataURL(file);
       reader.onload = async () => {
         const pdfDataUri = reader.result as string;
-        const result = (await extractQuizQuestions({
-          pdfDataUri,
-        })) as QuizData;
+        const result = await extractQuizQuestions({ pdfDataUri });
 
         if (!result || !result.questions || result.questions.length === 0) {
           throw new Error("Could not extract any questions from the PDF. Please check the file format.");
         }
         
-        const titledResult = { ...result, title: file.name };
-        setQuizData(titledResult);
-        setStatus("ready");
+        setExtractedQuestions({ title: file.name, questions: result.questions });
+        setStatus("answer_key");
         toast({
           title: "Extraction Complete!",
-          description: "Your quiz is ready to be played or saved.",
+          description: "Please provide the answer key for the extracted questions.",
         });
       };
       reader.onerror = () => {
@@ -70,6 +68,22 @@ export default function Home() {
         description: e.message || "Failed to generate quiz. Please try another PDF.",
       });
       setStatus("upload");
+    }
+  };
+
+  const handleAnswerKeySubmit = (answers: Record<number, string>) => {
+    if (extractedQuestions) {
+      const fullQuizData: QuizData = {
+        title: extractedQuestions.title,
+        questions: extractedQuestions.questions.map(q => ({
+          ...q,
+          correctAnswer: answers[q.questionNumber] || "",
+        })),
+        accuracyAssessment: "User-provided answer key.",
+      };
+      setQuizData(fullQuizData);
+      setStatus("ready");
+      setExtractedQuestions(null);
     }
   };
 
@@ -145,6 +159,7 @@ export default function Home() {
     setStatus("upload");
     setQuizData(null);
     setUserAnswers({});
+    setExtractedQuestions(null);
   };
 
   const renderContent = () => {
@@ -165,12 +180,14 @@ export default function Home() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <h2 className="text-xl font-semibold">Extracting Quiz...</h2>
+            <h2 className="text-xl font-semibold">Extracting Questions...</h2>
             <p className="text-muted-foreground">
               Our AI is analyzing your document. This may take a few moments.
             </p>
           </div>
         );
+      case "answer_key":
+        return extractedQuestions && <AnswerKeyForm extractedQuestions={extractedQuestions.questions} onSubmit={handleAnswerKeySubmit} title={extractedQuestions.title} />;
       case "ready":
         return (
           quizData && (
@@ -178,7 +195,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-2xl font-headline text-center">Quiz Ready!</CardTitle>
                 <CardDescription className="text-center">
-                  Extracted {quizData.questions.length} questions from <br /> <strong>{quizData.title}</strong>
+                  Created a quiz with {quizData.questions.length} questions from <br /> <strong>{quizData.title}</strong>
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row items-center gap-4 justify-center">
@@ -223,7 +240,7 @@ export default function Home() {
         <div className="flex-grow" />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {(status === "results" || status === "quiz" || status === "ready") && (
+          {(status !== "upload" && status !== "processing") && (
             <Button onClick={handleRestart} variant="outline">
               Start New Quiz
             </Button>

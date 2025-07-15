@@ -18,11 +18,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Label, Pie, PieChart, Cell } from "recharts";
-import { CheckCircle2, XCircle, Info } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "./ui/switch";
 import { Label as UiLabel } from "./ui/label";
@@ -37,11 +35,10 @@ interface QuizResultsProps {
 export function QuizResults({
   quizData,
   userAnswers,
-  onRestart,
 }: QuizResultsProps) {
   const [showOnlyIncorrect, setShowOnlyIncorrect] = useState(false);
 
-  const { questions, accuracyAssessment } = quizData;
+  const { questions } = quizData;
   const score = questions.reduce((acc, q) => {
     return userAnswers[q.questionNumber] === q.correctAnswer ? acc + 1 : acc;
   }, 0);
@@ -62,7 +59,7 @@ export function QuizResults({
       <Card className="shadow-lg">
         <CardHeader className="items-center">
           <CardTitle className="text-3xl font-headline">Quiz Complete!</CardTitle>
-          <CardDescription>Here's how you did.</CardDescription>
+          <CardDescription>Here's how you did on {quizData.title}.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="h-[200px] w-[200px]">
@@ -96,15 +93,6 @@ export function QuizResults({
               </PieChart>
             </ChartContainer>
           </div>
-           <Card className="flex-1 bg-muted/50">
-            <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
-                <Info className="h-5 w-5 text-secondary" />
-                <h3 className="font-semibold text-lg text-secondary font-headline">AI Accuracy Assessment</h3>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">{accuracyAssessment}</p>
-            </CardContent>
-          </Card>
         </CardContent>
       </Card>
       
