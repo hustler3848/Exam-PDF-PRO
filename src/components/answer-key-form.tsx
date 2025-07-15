@@ -121,17 +121,17 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                       control={form.control}
                       name={`answers.${index}.correctAnswer`}
                       render={({ field }) => (
-                        <FormItem className="p-4 border rounded-lg">
+                        <FormItem className="p-4 border rounded-lg bg-card">
                           <FormLabel className="font-question text-base flex items-start gap-2">
-                             <span>{question.questionNumber}.</span> 
+                             <span className="text-muted-foreground">{question.questionNumber}.</span> 
                              <div className="flex-1"><MathRenderer text={question.questionText} /></div>
                           </FormLabel>
-                          <Select
+                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="mt-2">
                                 <SelectValue placeholder="Select the correct answer" />
                               </SelectTrigger>
                             </FormControl>
@@ -153,7 +153,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
             </ScrollArea>
              <CardFooter className="mt-6 p-0">
                 <Button type="submit" className="w-full" size="lg">
-                    Create Quiz
+                    Submit Answer Key
                 </Button>
             </CardFooter>
           </form>
