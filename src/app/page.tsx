@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type AppStatus = "upload" | "processing" | "quiz" | "results";
 
@@ -108,11 +109,14 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex-grow" />
-        {(status === "results" || status === "quiz") && (
-          <Button onClick={handleRestart} variant="outline">
-            Start New Quiz
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          {(status === "results" || status === "quiz") && (
+            <Button onClick={handleRestart} variant="outline">
+              Start New Quiz
+            </Button>
+          )}
+        </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         <div className="w-full max-w-4xl">{renderContent()}</div>
