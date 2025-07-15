@@ -32,6 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ScrollArea } from "./ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { InlineMath, BlockMath } from 'react-katex';
 
 interface AnswerKeyFormProps {
   extractedQuestions: ExtractedQuestion[];
@@ -100,7 +101,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                       render={({ field }) => (
                         <FormItem className="p-4 border rounded-lg">
                           <FormLabel className="font-question text-base">
-                            {question.questionNumber}. {question.questionText}
+                            {question.questionNumber}. <InlineMath math={question.questionText} />
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -114,7 +115,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
                             <SelectContent>
                               {question.options.map((option, i) => (
                                 <SelectItem key={i} value={option}>
-                                  {option}
+                                  <InlineMath math={option} />
                                 </SelectItem>
                               ))}
                             </SelectContent>

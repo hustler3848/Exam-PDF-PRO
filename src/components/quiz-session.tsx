@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { InlineMath, BlockMath } from 'react-katex';
 
 interface QuizSessionProps {
   quizData: QuizData;
@@ -55,7 +56,7 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
           Question {currentQuestionIndex + 1} of {questions.length}
         </CardDescription>
         <CardTitle className="pt-2 !mt-0 font-question text-xl md:text-2xl text-center">
-          {currentQuestion.questionText}
+          <BlockMath math={currentQuestion.questionText} />
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -71,7 +72,7 @@ export function QuizSession({ quizData, onSubmit }: QuizSessionProps) {
               className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
             >
               <RadioGroupItem value={option} id={`option-${index}`} />
-              <span className="text-base">{option}</span>
+              <span className="text-base"><InlineMath math={option} /></span>
             </Label>
           ))}
         </RadioGroup>

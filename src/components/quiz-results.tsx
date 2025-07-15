@@ -24,6 +24,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "./ui/switch";
 import { Label as UiLabel } from "./ui/label";
+import { InlineMath, BlockMath } from 'react-katex';
 
 
 interface QuizResultsProps {
@@ -127,7 +128,7 @@ export function QuizResults({
                         <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
                       )}
                       <span className="font-question">
-                        {q.questionNumber}. {q.questionText}
+                        {q.questionNumber}. <InlineMath math={q.questionText} />
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -146,7 +147,7 @@ export function QuizResults({
                             )}
                           >
                              {isCorrectAnswer ? <CheckCircle2 className="h-4 w-4 text-success" /> : (isUserAnswer ? <XCircle className="h-4 w-4 text-destructive" /> : <div className="h-4 w-4"/>)}
-                            <span>{option}</span>
+                            <span><InlineMath math={option} /></span>
                             {isUserAnswer && !isCorrectAnswer && <Badge variant="destructive">Your Answer</Badge>}
                             {isCorrectAnswer && <Badge className="bg-success text-success-foreground hover:bg-success/80">Correct Answer</Badge>}
                           </div>
@@ -155,11 +156,11 @@ export function QuizResults({
                     </div>
                     {!isCorrect && userAnswer && (
                       <p className="mt-3 text-sm font-code text-destructive">
-                          Your answer: {userAnswer}
+                          Your answer: <InlineMath math={userAnswer} />
                       </p>
                     )}
                      <p className="mt-1 text-sm font-code text-success">
-                        Correct answer: {q.correctAnswer}
+                        Correct answer: <InlineMath math={q.correctAnswer} />
                     </p>
                   </AccordionContent>
                 </AccordionItem>

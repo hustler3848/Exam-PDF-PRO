@@ -43,6 +43,8 @@ const extractQuizQuestionsPrompt = ai.definePrompt({
 
   It is critical that you extract ALL questions from the document. Carefully scan every page to ensure no questions are missed. Do NOT extract the correct answers, only the questions and the options.
 
+  IMPORTANT: If you encounter any mathematical equations or symbols (like fractions, integrals, summations, greek letters, etc.), you MUST format them using LaTeX. For inline mathematics, wrap the expression in single dollar signs ($...$). For block-level or display mathematics, wrap the expression in double dollar signs ($$...$$).
+
   Analyze the PDF document and identify the questions, question numbers, and options.
 
   PDF Document: {{media url=pdfDataUri}}
