@@ -30,7 +30,7 @@ export function SavedQuizzesDialog({
 }: SavedQuizzesDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Saved Quizzes</DialogTitle>
           <DialogDescription>
@@ -58,6 +58,7 @@ export function SavedQuizzesDialog({
                       variant="ghost"
                       size="icon"
                       onClick={() => onPlay(quiz)}
+                      aria-label={`Play quiz ${quiz.title}`}
                     >
                       <Play className="h-5 w-5 text-success" />
                       <span className="sr-only">Play</span>
@@ -66,6 +67,7 @@ export function SavedQuizzesDialog({
                       variant="ghost"
                       size="icon"
                       onClick={() => onDelete(quiz)}
+                      aria-label={`Delete quiz ${quiz.title}`}
                     >
                       <Trash2 className="h-5 w-5 text-destructive" />
                       <span className="sr-only">Delete</span>
