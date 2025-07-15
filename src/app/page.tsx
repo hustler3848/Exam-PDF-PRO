@@ -51,7 +51,6 @@ export default function Home() {
           throw new Error("Could not extract any questions from the PDF. Please check the file format.");
         }
         
-        // Add a title to the quiz data for easier identification
         const titledResult = { ...result, title: file.name };
         setQuizData(titledResult);
         setStatus("ready");
@@ -82,12 +81,22 @@ export default function Home() {
 
   const handleSaveForLater = () => {
     if (quizData) {
-      const newSavedQuizzes = [...savedQuizzes, quizData];
+      const existingQuizIndex = savedQuizzes.findIndex(q => q.title === quizData.title);
+      let newSavedQuizzes;
+      if (existingQuizIndex > -1) {
+        // Update existing quiz
+        newSavedQuizzes = [...savedQuizzes];
+        newSavedQuizzes[existingQuizIndex] = quizData;
+      } else {
+        // Add new quiz
+        newSavedQuizzes = [...savedQuizzes, quizData];
+      }
+      
       try {
         localStorage.setItem("savedQuizzes", JSON.stringify(newSavedQuizzes));
         setSavedQuizzes(newSavedQuizzes);
         toast({
-          title: "Quiz Saved!",
+          title: existingQuizIndex > -1 ? "Quiz Updated!" : "Quiz Saved!",
           description: "You can access it from 'Saved Quizzes' on the home screen.",
         });
         handleRestart();
