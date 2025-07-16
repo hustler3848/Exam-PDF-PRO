@@ -39,8 +39,10 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
 const extractExamQuestionsPrompt = ai.definePrompt({
   name: 'extractExamQuestionsPrompt',
   input: {schema: ExtractExamQuestionsInputSchema},
-  output: {schema: ExtractExamQuestionsOutputSchema},
-  prompt: `You are an expert exam question extractor. Your task is to extract exam questions and their multiple-choice options from a PDF document.
+  output: {
+    format: 'json',
+  },
+  prompt: `You are an expert exam question extractor. Your task is to extract exam questions and their multiple-choice options from a PDF document. Your output MUST be a JSON object with a single key "questions" that contains an array of question objects. Each question object must have "questionNumber" (number), "questionText" (string), and "options" (array of strings).
 
   It is critical that you extract ALL questions from the document. Carefully scan every page to ensure no questions are missed. Do NOT extract the correct answers, only the questions and the options.
 
@@ -60,10 +62,20 @@ const extractExamQuestionsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await extractExamQuestionsPrompt(input);
-    if (output?.questions) {
+    const parsedOutput = output as ExtractExamQuestionsOutput;
+
+    if (parsedOutput?.questions) {
       // Filter out any empty or incomplete objects that the model might return.
-      output.questions = output.questions.filter(q => q && q.questionNumber && q.questionText && q.options);
+      parsedOutput.questions = parsedOutput.questions.filter(q => q && q.questionNumber && q.questionText && Array.isArray(q.options));
     }
-    return output!;
+    
+    // Final validation to ensure the data conforms to the schema before returning
+    const validatedOutput = ExtractExamQuestionsOutputSchema.safeParse(parsedOutput);
+    if (!validatedOutput.success) {
+      console.error("Final validation failed:", validatedOutput.error);
+      throw new Error("Failed to extract valid questions from the PDF.");
+    }
+
+    return validatedOutput.data;
   }
 );
