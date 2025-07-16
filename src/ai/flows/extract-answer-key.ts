@@ -45,6 +45,7 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
     }
     
     const text = response.text();
+    // Extract JSON from markdown code block
     const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
     
     if (!jsonText) {
