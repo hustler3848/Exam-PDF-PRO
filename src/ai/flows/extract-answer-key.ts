@@ -32,11 +32,11 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
 
   const pdfPart = dataUriToInlineData(input.pdfDataUri);
 
-  const result = await geminiProVision.generateContent([prompt, pdfPart]);
-  const response = await result.response;
-  const text = response.text();
-
   try {
+    const result = await geminiProVision.generateContent([prompt, pdfPart]);
+    const response = await result.response;
+    const text = response.text();
+
     const jsonText = text.replace('```json', '').replace('```', '').trim();
     if (!jsonText) {
       throw new Error("The AI returned an empty response from the answer key. Please check the PDF file or try again.");
@@ -55,8 +55,11 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
     
     return validated.data;
   } catch (e: any) {
-    console.error("Error parsing AI response:", e);
-    console.error("Raw text from AI:", text);
-    throw new Error("The AI returned an invalid response. Could not parse the answer key.");
+    console.error("Error during AI answer key extraction:", e);
+    // Provide a more user-friendly message
+    const message = e.message.includes("SAFETY") 
+      ? "The content could not be processed due to safety settings."
+      : "An error occurred while analyzing the answer key. Please try again.";
+    throw new Error(message);
   }
 }
