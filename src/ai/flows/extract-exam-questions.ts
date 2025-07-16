@@ -43,19 +43,19 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
       throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
     }
     const parsed = JSON.parse(jsonText);
-
-    // Filter out any empty or incomplete objects that the model might return.
-    if (parsed.questions) {
-      parsed.questions = parsed.questions.filter((q: any) => 
-        q && q.questionNumber && q.questionText && Array.isArray(q.options) && q.options.length > 0
-      );
-    }
-
+    
     const validated = ExtractExamQuestionsOutputSchema.safeParse(parsed);
 
     if (!validated.success) {
       console.error("Final validation failed:", validated.error);
       throw new Error("Failed to extract valid questions from the PDF.");
+    }
+
+    // Filter out any empty or incomplete objects that the model might return.
+    if (validated.data.questions) {
+      validated.data.questions = validated.data.questions.filter((q: any) => 
+        q && q.questionNumber && q.questionText && Array.isArray(q.options) && q.options.length > 0
+      );
     }
 
     return validated.data;
