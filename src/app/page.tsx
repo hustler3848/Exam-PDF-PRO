@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SavedExamsDialog } from "@/components/saved-exams-dialog";
 import { ProcessingAnimation } from "@/components/processing-animation";
+import { cn } from "@/lib/utils";
 
 type AppStatus = "upload" | "processing_exam" | "provide_answer_key" | "processing_answers" | "ready" | "exam" | "results";
 
@@ -292,7 +293,9 @@ export default function Home() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="w-full max-w-4xl">{renderContent()}</div>
+        <div className={cn("w-full", status === 'exam' ? 'max-w-7xl' : 'max-w-4xl')}>
+            {renderContent()}
+        </div>
       </main>
       <SavedExamsDialog
         isOpen={isSavedExamsDialogOpen}
