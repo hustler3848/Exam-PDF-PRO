@@ -21,13 +21,13 @@ export type ExtractExamQuestionsInput = { pdfDataUri: string };
 export type ExtractExamQuestionsOutput = z.infer<typeof ExtractExamQuestionsOutputSchema>;
 
 export async function extractExamQuestions(input: ExtractExamQuestionsInput): Promise<ExtractExamQuestionsOutput> {
-  const prompt = `You are an expert exam question extractor. Your task is to extract exam questions and their multiple-choice options from a PDF document. Your output MUST be a JSON object that matches this schema: ${JSON.stringify(ExtractExamQuestionsOutputSchema.jsonSchema)}.
+  const prompt = `You are an expert exam question extractor. Your task is to extract exam questions and their multiple-choice options from a PDF document. Your output MUST be a valid JSON object.
 
   It is critical that you extract ALL questions from the document. Carefully scan every page to ensure no questions are missed. Do NOT extract the correct answers, only the questions and the options.
 
   IMPORTANT: If you encounter any mathematical equations or symbols (like fractions, integrals, summations, greek letters, etc.), you MUST format them using LaTeX. For inline mathematics, wrap the expression in single dollar signs ($...$). For block-level or display mathematics, wrap the expression in double dollar signs ($$...$$).
 
-  Analyze the PDF document and identify the questions, question numbers, and options.
+  Analyze the PDF document and identify the questions, question numbers, and options. Return a JSON object with a "questions" array. Each object in the array should have "questionNumber" (number), "questionText" (string), and "options" (array of strings).
   `;
   
   const pdfPart = dataUriToInlineData(input.pdfDataUri);

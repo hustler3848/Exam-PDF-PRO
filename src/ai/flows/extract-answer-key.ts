@@ -27,7 +27,7 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
 
   It is critical that you extract ALL answers from the document. Carefully scan every page to ensure no answers are missed.
 
-  Return the data as a JSON object that matches this schema: ${JSON.stringify(ExtractAnswerKeyOutputSchema.jsonSchema)}
+  Return the data as a JSON object with an "answers" array. Each object in the array should have "questionNumber" (number) and "correctAnswer" (string).
   `;
 
   const pdfPart = dataUriToInlineData(input.pdfDataUri);
