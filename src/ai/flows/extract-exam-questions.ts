@@ -6,6 +6,7 @@
  */
 import { geminiProVision, dataUriToInlineData } from "@/ai/gemini";
 import { z } from "zod";
+import { jsonrepair } from "jsonrepair";
 
 const ExamQuestionSchema = z.object({
   questionNumber: z.number().describe('The question number.'),
@@ -36,7 +37,6 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
     const result = await geminiProVision.generateContent([prompt, pdfPart]);
     const response = await result.response;
 
-    // Check for a valid response before proceeding
     if (!response || !response.text) {
       const message = response?.promptFeedback?.blockReason
         ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
@@ -45,14 +45,14 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
     }
     
     const text = response.text();
-    // Extract JSON from markdown code block
     const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
 
     if (!jsonText) {
       throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
     }
 
-    const parsed = JSON.parse(jsonText);
+    const repairedJson = jsonrepair(jsonText);
+    const parsed = JSON.parse(repairedJson);
     const validated = ExtractExamQuestionsOutputSchema.safeParse(parsed);
 
     if (!validated.success) {
@@ -60,7 +60,6 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
       throw new Error("Failed to extract valid questions from the PDF.");
     }
 
-    // Filter out any empty or incomplete objects that the model might return.
     if (validated.data.questions) {
       validated.data.questions = validated.data.questions.filter((q: any) => 
         q && q.questionNumber && q.questionText && Array.isArray(q.options) && q.options.length > 0
