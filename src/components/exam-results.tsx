@@ -54,6 +54,17 @@ const MathRenderer = ({ text }: { text: string }) => {
   );
 };
 
+const checkAnswer = (userAnswer: string, correctAnswer: string) => {
+  if (!userAnswer || !correctAnswer) return false;
+  // Handle cases like:
+  // userAnswer: "d) E" | correctAnswer: "d" -> true
+  // userAnswer: "Photosynthesis" | correctAnswer: "a) Photosynthesis" -> false (but should be true if AI extracts full text)
+  // To be safe, we check if one string starts with the other, after trimming.
+  const ua = userAnswer.trim();
+  const ca = correctAnswer.trim();
+  return ua === ca || ua.startsWith(ca) || ca.startsWith(ua);
+}
+
 export function ExamResults({
   examData,
   userAnswers,
@@ -62,7 +73,7 @@ export function ExamResults({
 
   const { questions } = examData;
   const score = questions.reduce((acc, q) => {
-    return userAnswers[q.questionNumber] === q.correctAnswer ? acc + 1 : acc;
+    return checkAnswer(userAnswers[q.questionNumber], q.correctAnswer) ? acc + 1 : acc;
   }, 0);
   const total = questions.length;
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
@@ -73,7 +84,7 @@ export function ExamResults({
   ];
 
   const filteredQuestions = showOnlyIncorrect
-    ? questions.filter((q) => userAnswers[q.questionNumber] !== q.correctAnswer)
+    ? questions.filter((q) => !checkAnswer(userAnswers[q.questionNumber], q.correctAnswer))
     : questions;
 
   return (
@@ -135,7 +146,7 @@ export function ExamResults({
           <Accordion type="single" collapsible className="w-full">
             {filteredQuestions.map((q) => {
               const userAnswer = userAnswers[q.questionNumber];
-              const isCorrect = userAnswer === q.correctAnswer;
+              const isCorrect = checkAnswer(userAnswer, q.correctAnswer);
               return (
                 <AccordionItem
                   value={`item-${q.questionNumber}`}
@@ -157,7 +168,7 @@ export function ExamResults({
                     <div className="space-y-3">
                       {q.options.map((option, i) => {
                         const isUserAnswer = userAnswer === option;
-                        const isCorrectAnswer = q.correctAnswer === option;
+                        const isCorrectAnswer = checkAnswer(option, q.correctAnswer);
                         return (
                           <div
                             key={i}
