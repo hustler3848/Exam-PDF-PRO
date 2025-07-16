@@ -35,14 +35,25 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
   try {
     const result = await geminiProVision.generateContent([prompt, pdfPart]);
     const response = await result.response;
-    const text = response.text();
 
-    const jsonText = text.replace('```json', '').replace('```', '').trim();
+    // Check for a valid response before proceeding
+    if (!response || !response.text) {
+      const message = response?.promptFeedback?.blockReason
+        ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
+        : "The AI returned an invalid response. Please check the PDF file or try again.";
+      throw new Error(message);
+    }
+    
+    const text = response.text();
+    const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
+    
     if (!jsonText) {
       throw new Error("The AI returned an empty response from the answer key. Please check the PDF file or try again.");
     }
+    
     const parsed = JSON.parse(jsonText);
     const validated = ExtractAnswerKeyOutputSchema.safeParse(parsed);
+    
     if (!validated.success) {
       console.error("Schema validation failed:", validated.error);
       throw new Error("Failed to extract valid answers from the PDF answer key.");
@@ -56,10 +67,7 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
     return validated.data;
   } catch (e: any) {
     console.error("Error during AI answer key extraction:", e);
-    // Provide a more user-friendly message
-    const message = e.message.includes("SAFETY") 
-      ? "The content could not be processed due to safety settings."
-      : "An error occurred while analyzing the answer key. Please try again.";
+    const message = e.message || "An error occurred while analyzing the answer key. Please try again.";
     throw new Error(message);
   }
 }

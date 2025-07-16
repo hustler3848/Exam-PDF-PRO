@@ -35,15 +35,23 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
   try {
     const result = await geminiProVision.generateContent([prompt, pdfPart]);
     const response = await result.response;
-    const text = response.text();
+
+    // Check for a valid response before proceeding
+    if (!response || !response.text) {
+      const message = response?.promptFeedback?.blockReason
+        ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
+        : "The AI returned an invalid response. Please check the PDF file or try again.";
+      throw new Error(message);
+    }
     
-    // Clean up the response to get just the JSON part
-    const jsonText = text.replace('```json', '').replace('```', '').trim();
+    const text = response.text();
+    const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
+
     if (!jsonText) {
       throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
     }
+
     const parsed = JSON.parse(jsonText);
-    
     const validated = ExtractExamQuestionsOutputSchema.safeParse(parsed);
 
     if (!validated.success) {
@@ -61,10 +69,7 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
     return validated.data;
   } catch (e: any) {
     console.error("Error during AI exam extraction:", e);
-    // Provide a more user-friendly message
-    const message = e.message.includes("SAFETY") 
-      ? "The content could not be processed due to safety settings."
-      : "An error occurred while analyzing the document. Please try again.";
+    const message = e.message || "An error occurred while analyzing the document. Please try again.";
     throw new Error(message);
   }
 }
