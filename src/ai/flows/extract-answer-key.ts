@@ -3,23 +3,10 @@
 
 /**
  * @fileOverview An AI agent for extracting answers from a quiz answer key PDF.
- *
- * - extractAnswerKey - A function that handles the answer key extraction process.
- * - ExtractAnswerKeyInput - The input type for the extractAnswerKey function.
- * - ExtractAnswerKeyOutput - The return type for the extractAnswerKey function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const ExtractAnswerKeyInputSchema = z.object({
-  pdfDataUri: z
-    .string()
-    .describe(
-      "An answer key PDF document, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ExtractAnswerKeyInput = z.infer<typeof ExtractAnswerKeyInputSchema>;
+import { geminiProVision, dataUriToInlineData } from "@/ai/gemini";
+import { z } from "zod";
 
 const AnswerSchema = z.object({
   questionNumber: z.number().describe('The question number.'),
@@ -29,39 +16,44 @@ const AnswerSchema = z.object({
 const ExtractAnswerKeyOutputSchema = z.object({
   answers: z.array(AnswerSchema).describe('The extracted answers.'),
 });
+
+export type ExtractAnswerKeyInput = { pdfDataUri: string };
 export type ExtractAnswerKeyOutput = z.infer<typeof ExtractAnswerKeyOutputSchema>;
 
 export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<ExtractAnswerKeyOutput> {
-  return extractAnswerKeyFlow(input);
-}
-
-const extractAnswerKeyPrompt = ai.definePrompt({
-  name: 'extractAnswerKeyPrompt',
-  input: {schema: ExtractAnswerKeyInputSchema},
-  output: {schema: ExtractAnswerKeyOutputSchema},
-  prompt: `You are an expert at extracting answers from an answer key document. Your task is to extract the question number and the corresponding correct answer from the provided PDF.
+  const prompt = `You are an expert at extracting answers from an answer key document. Your task is to extract the question number and the corresponding correct answer from the provided PDF.
 
   The answer key may list answers in various formats (e.g., "1. A", "2. B", "3) C", etc.). Your job is to parse this information accurately. The 'correctAnswer' should be the letter or the option text itself. For example, if the key says "1. A) Photosynthesis", the 'correctAnswer' can be "A" or "Photosynthesis". Be consistent.
 
   It is critical that you extract ALL answers from the document. Carefully scan every page to ensure no answers are missed.
 
-  Analyze the PDF document and identify the question numbers and their correct answers.
+  Return the data as a JSON object that matches this schema: ${JSON.stringify(ExtractAnswerKeyOutputSchema.jsonSchema)}
+  `;
 
-  PDF Document: {{media url=pdfDataUri}}
-  `,
-});
+  const pdfPart = dataUriToInlineData(input.pdfDataUri);
 
-const extractAnswerKeyFlow = ai.defineFlow(
-  {
-    name: 'extractAnswerKeyFlow',
-    inputSchema: ExtractAnswerKeyInputSchema,
-    outputSchema: ExtractAnswerKeyOutputSchema,
-  },
-  async input => {
-    const {output} = await extractAnswerKeyPrompt(input);
-     if (output?.answers) {
-      output.answers = output.answers.filter(a => a && a.questionNumber && a.correctAnswer);
+  const result = await geminiProVision.generateContent([prompt, pdfPart]);
+  const response = await result.response;
+  const text = response.text();
+
+  try {
+    const jsonText = text.replace('```json', '').replace('```', '').trim();
+    const parsed = JSON.parse(jsonText);
+    const validated = ExtractAnswerKeyOutputSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.error("Schema validation failed:", validated.error);
+      throw new Error("Failed to extract valid answers from the PDF answer key.");
     }
-    return output!;
+    
+    // Filter out any empty or incomplete answers
+    if (validated.data.answers) {
+      validated.data.answers = validated.data.answers.filter(a => a && a.questionNumber && a.correctAnswer);
+    }
+    
+    return validated.data;
+  } catch (e) {
+    console.error("Error parsing AI response:", e);
+    console.error("Raw text from AI:", text);
+    throw new Error("The AI returned an invalid response. Could not parse the answer key.");
   }
-);
+}
