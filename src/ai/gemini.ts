@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import 'dotenv/config'
 
 const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) {
