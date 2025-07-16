@@ -9,7 +9,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, TimerIcon } from "lucide-react";
 import { InlineMath, BlockMath } from 'react-katex';
-import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface ExamSessionProps {
   examData: ExamData;
@@ -53,7 +64,7 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
       return;
     }
     const timer = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
+      setTimeLeft((prevTime) => prevTime > 0 ? prevTime - 1 : 0);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -144,9 +155,25 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
               Previous Question
             </Button>
             {isLastQuestion ? (
-              <Button onClick={handleSubmit} className="bg-success hover:bg-success/90">
-                Finish Exam
-              </Button>
+               <AlertDialog>
+                <AlertDialogTrigger asChild>
+                   <Button className="bg-success hover:bg-success/90">
+                    Finish Exam
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                       Are you sure you want to finish this session? You will not be able to change your answers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSubmit} className="bg-success hover:bg-success/90">Finish</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             ) : (
               <Button onClick={goToNext}>
                 Next Question
@@ -178,7 +205,23 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
                     <div className="text-xs text-muted-foreground mt-1">SECONDS</div>
                 </div>
             </div>
-            <Button variant="destructive" className="w-full mt-6" onClick={handleSubmit}>End Session</Button>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full mt-6">End Session</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Do you wanna end this session?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will end your current exam session and calculate your score based on the answers you've provided so far.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSubmit} className="bg-destructive hover:bg-destructive/90">End Session</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
           </CardContent>
         </Card>
         <Card className="shadow-lg">
