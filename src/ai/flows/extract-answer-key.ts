@@ -45,6 +45,8 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
     }
     
     const text = response.text();
+    console.log("Raw AI Response (Answer Key):", text);
+
     const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
     
     if (!jsonText) {

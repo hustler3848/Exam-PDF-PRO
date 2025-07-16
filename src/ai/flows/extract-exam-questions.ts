@@ -45,6 +45,8 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
     }
     
     const text = response.text();
+    console.log("Raw AI Response (Exam Questions):", text);
+    
     const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
 
     if (!jsonText) {
