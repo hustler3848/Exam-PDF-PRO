@@ -38,6 +38,9 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
 
   try {
     const jsonText = text.replace('```json', '').replace('```', '').trim();
+    if (!jsonText) {
+      throw new Error("The AI returned an empty response from the answer key. Please check the PDF file or try again.");
+    }
     const parsed = JSON.parse(jsonText);
     const validated = ExtractAnswerKeyOutputSchema.safeParse(parsed);
     if (!validated.success) {
@@ -51,7 +54,7 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
     }
     
     return validated.data;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error parsing AI response:", e);
     console.error("Raw text from AI:", text);
     throw new Error("The AI returned an invalid response. Could not parse the answer key.");

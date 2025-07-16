@@ -39,6 +39,9 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
   try {
     // Clean up the response to get just the JSON part
     const jsonText = text.replace('```json', '').replace('```', '').trim();
+    if (!jsonText) {
+      throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
+    }
     const parsed = JSON.parse(jsonText);
 
     // Filter out any empty or incomplete objects that the model might return.
@@ -56,7 +59,7 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
     }
 
     return validated.data;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error parsing AI response:", e);
     console.error("Raw text from AI:", text);
     throw new Error("The AI returned an invalid response. Could not parse the exam questions.");
