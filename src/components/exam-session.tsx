@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ExamData } from "@/types/exam";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,36 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
   const { questions, title } = examData;
   const currentQuestion = questions[currentQuestionIndex];
 
+  // Default exam duration: 2 hours
+  const examDurationInSeconds = 2 * 60 * 60;
+  const [timeLeft, setTimeLeft] = useState(examDurationInSeconds);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleSubmit();
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => prevTime - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return {
+        hours: h.toString().padStart(2, '0'),
+        minutes: m.toString().padStart(2, '0'),
+        seconds: s.toString().padStart(2, '0'),
+    };
+  }
+
+  const { hours, minutes, seconds } = formatTime(timeLeft);
+
   const handleAnswerChange = (value: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -73,16 +103,18 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full animate-fade-in">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full animate-fade-in">
       {/* Main Question Area */}
-      <div className="md:col-span-2">
+      <div className="lg:col-span-2">
         <Card className="w-full shadow-lg">
           <CardHeader>
             <CardDescription className="text-primary font-semibold uppercase tracking-wider">{title}</CardDescription>
             <CardTitle className="font-question text-xl md:text-2xl pt-2">
               <span className="font-semibold text-muted-foreground mr-2">Question No. {currentQuestion.questionNumber}</span>
-              <MathRenderer text={currentQuestion.questionText} />
             </CardTitle>
+             <div className="font-question text-xl md:text-2xl pt-2">
+                <MathRenderer text={currentQuestion.questionText} />
+             </div>
           </CardHeader>
           <CardContent>
             <RadioGroup
@@ -126,7 +158,7 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
       </div>
 
       {/* Sidebar */}
-      <div className="md:col-span-1 space-y-6">
+      <div className="lg:col-span-1 space-y-6">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><TimerIcon /> Time Left</CardTitle>
@@ -134,15 +166,15 @@ export function ExamSession({ examData, onSubmit }: ExamSessionProps) {
           <CardContent>
              <div className="flex justify-center gap-4 text-center">
                 <div>
-                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">01</div>
+                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">{hours}</div>
                     <div className="text-xs text-muted-foreground mt-1">HOURS</div>
                 </div>
                  <div>
-                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">59</div>
+                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">{minutes}</div>
                     <div className="text-xs text-muted-foreground mt-1">MINUTES</div>
                 </div>
                  <div>
-                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">55</div>
+                    <div className="text-3xl font-bold bg-muted p-3 rounded-lg">{seconds}</div>
                     <div className="text-xs text-muted-foreground mt-1">SECONDS</div>
                 </div>
             </div>
