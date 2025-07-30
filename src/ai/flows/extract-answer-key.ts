@@ -21,6 +21,8 @@ const ExtractAnswerKeyOutputSchema = z.object({
 export type ExtractAnswerKeyInput = { pdfDataUri: string };
 export type ExtractAnswerKeyOutput = z.infer<typeof ExtractAnswerKeyOutputSchema>;
 
+const MAX_RETRIES = 3;
+
 export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<ExtractAnswerKeyOutput> {
   const prompt = `You are an expert at extracting answers from an answer key document. Your task is to extract the question number and the corresponding correct answer from the provided PDF.
 
@@ -33,43 +35,51 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
 
   const pdfPart = dataUriToInlineData(input.pdfDataUri);
 
-  try {
-    const result = await geminiProVision.generateContent([prompt, pdfPart]);
-    const response = await result.response;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await geminiProVision.generateContent([prompt, pdfPart]);
+      const response = await result.response;
 
-    if (!response || !response.text) {
-      const message = response?.promptFeedback?.blockReason
-        ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
-        : "The AI returned an invalid response. Please check the PDF file or try again.";
-      throw new Error(message);
-    }
-    
-    const text = response.text();
-    console.log("Raw AI Response (Answer Key):", text);
+      if (!response || !response.text) {
+        const message = response?.promptFeedback?.blockReason
+          ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
+          : "The AI returned an invalid response. Please check the PDF file or try again.";
+        throw new Error(message);
+      }
+      
+      const text = response.text();
+      console.log("Raw AI Response (Answer Key):", text);
 
-    const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
-    
-    if (!jsonText) {
-      throw new Error("The AI returned an empty response from the answer key. Please check the PDF file or try again.");
+      const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
+      
+      if (!jsonText) {
+        throw new Error("The AI returned an empty response from the answer key. Please check the PDF file or try again.");
+      }
+      
+      const repairedJson = jsonrepair(jsonText);
+      const parsed = JSON.parse(repairedJson);
+      const validated = ExtractAnswerKeyOutputSchema.safeParse(parsed);
+      
+      if (!validated.success) {
+        console.error("Schema validation failed:", validated.error);
+        throw new Error("Failed to extract valid answers from the PDF answer key.");
+      }
+      
+      if (validated.data.answers) {
+        validated.data.answers = validated.data.answers.filter(a => a && a.questionNumber && a.correctAnswer);
+      }
+      
+      return validated.data;
+    } catch (e: any) {
+      console.error(`Attempt ${attempt} failed for answer key extraction:`, e);
+      if (attempt === MAX_RETRIES) {
+        const message = e.message || "An error occurred while analyzing the answer key. Please try again.";
+        throw new Error(message);
+      }
+      // Wait for a short duration before retrying
+      await new Promise(res => setTimeout(res, 1000 * attempt));
     }
-    
-    const repairedJson = jsonrepair(jsonText);
-    const parsed = JSON.parse(repairedJson);
-    const validated = ExtractAnswerKeyOutputSchema.safeParse(parsed);
-    
-    if (!validated.success) {
-      console.error("Schema validation failed:", validated.error);
-      throw new Error("Failed to extract valid answers from the PDF answer key.");
-    }
-    
-    if (validated.data.answers) {
-      validated.data.answers = validated.data.answers.filter(a => a && a.questionNumber && a.correctAnswer);
-    }
-    
-    return validated.data;
-  } catch (e: any) {
-    console.error("Error during AI answer key extraction:", e);
-    const message = e.message || "An error occurred while analyzing the answer key. Please try again.";
-    throw new Error(message);
   }
+  // This should not be reached, but typescript needs a return path.
+  throw new Error("Failed to extract answer key after multiple attempts.");
 }

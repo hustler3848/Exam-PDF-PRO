@@ -21,6 +21,8 @@ const ExtractExamQuestionsOutputSchema = z.object({
 export type ExtractExamQuestionsInput = { pdfDataUri: string };
 export type ExtractExamQuestionsOutput = z.infer<typeof ExtractExamQuestionsOutputSchema>;
 
+const MAX_RETRIES = 3;
+
 export async function extractExamQuestions(input: ExtractExamQuestionsInput): Promise<ExtractExamQuestionsOutput> {
   const prompt = `You are an expert exam question extractor. Your task is to extract exam questions and their multiple-choice options from a PDF document. Your output MUST be a valid JSON object.
 
@@ -33,45 +35,53 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
   
   const pdfPart = dataUriToInlineData(input.pdfDataUri);
 
-  try {
-    const result = await geminiProVision.generateContent([prompt, pdfPart]);
-    const response = await result.response;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await geminiProVision.generateContent([prompt, pdfPart]);
+      const response = await result.response;
 
-    if (!response || !response.text) {
-      const message = response?.promptFeedback?.blockReason
-        ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
-        : "The AI returned an invalid response. Please check the PDF file or try again.";
-      throw new Error(message);
+      if (!response || !response.text) {
+        const message = response?.promptFeedback?.blockReason
+          ? `The content could not be processed due to safety settings: ${response.promptFeedback.blockReason}`
+          : "The AI returned an invalid response. Please check the PDF file or try again.";
+        throw new Error(message);
+      }
+      
+      const text = response.text();
+      console.log("Raw AI Response (Exam Questions):", text);
+      
+      const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
+
+      if (!jsonText) {
+        throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
+      }
+
+      const repairedJson = jsonrepair(jsonText);
+      const parsed = JSON.parse(repairedJson);
+      const validated = ExtractExamQuestionsOutputSchema.safeParse(parsed);
+
+      if (!validated.success) {
+        console.error("Final validation failed:", validated.error);
+        throw new Error("Failed to extract valid questions from the PDF.");
+      }
+
+      if (validated.data.questions) {
+        validated.data.questions = validated.data.questions.filter((q: any) => 
+          q && q.questionNumber && q.questionText && Array.isArray(q.options) && q.options.length > 0
+        );
+      }
+
+      return validated.data;
+    } catch (e: any) {
+      console.error(`Attempt ${attempt} failed for exam extraction:`, e);
+      if (attempt === MAX_RETRIES) {
+        const message = e.message || "An error occurred while analyzing the document. Please try again.";
+        throw new Error(message);
+      }
+      // Wait for a short duration before retrying
+      await new Promise(res => setTimeout(res, 1000 * attempt));
     }
-    
-    const text = response.text();
-    console.log("Raw AI Response (Exam Questions):", text);
-    
-    const jsonText = text.replace(/```json\n?/, '').replace(/```$/, '').trim();
-
-    if (!jsonText) {
-      throw new Error("The AI returned an empty response. Please check the PDF file or try again.");
-    }
-
-    const repairedJson = jsonrepair(jsonText);
-    const parsed = JSON.parse(repairedJson);
-    const validated = ExtractExamQuestionsOutputSchema.safeParse(parsed);
-
-    if (!validated.success) {
-      console.error("Final validation failed:", validated.error);
-      throw new Error("Failed to extract valid questions from the PDF.");
-    }
-
-    if (validated.data.questions) {
-      validated.data.questions = validated.data.questions.filter((q: any) => 
-        q && q.questionNumber && q.questionText && Array.isArray(q.options) && q.options.length > 0
-      );
-    }
-
-    return validated.data;
-  } catch (e: any) {
-    console.error("Error during AI exam extraction:", e);
-    const message = e.message || "An error occurred while analyzing the document. Please try again.";
-    throw new Error(message);
   }
+  // This should not be reached, but typescript needs a return path.
+  throw new Error("Failed to extract exam questions after multiple attempts.");
 }
