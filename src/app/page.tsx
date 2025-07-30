@@ -47,19 +47,29 @@ export default function Home() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
-        const pdfDataUri = reader.result as string;
-        const result = await extractExamQuestions({ pdfDataUri });
+        try {
+          const pdfDataUri = reader.result as string;
+          const result = await extractExamQuestions({ pdfDataUri });
 
-        if (!result || !result.questions || result.questions.length === 0) {
-          throw new Error("Could not extract any questions from the PDF. Please check the file format.");
+          if (!result || !result.questions || result.questions.length === 0) {
+            throw new Error("Could not extract any questions from the PDF. Please check the file format.");
+          }
+          
+          setExtractedQuestions({ title: file.name, questions: result.questions });
+          setStatus("provide_answer_key");
+          toast({
+            title: "Extraction Complete!",
+            description: `Extracted ${result.questions.length} questions. You can now provide an answer key.`,
+          });
+        } catch (e: any) {
+            console.error(e);
+            toast({
+              variant: "destructive",
+              title: "Oh no! Something went wrong.",
+              description: e.message || "Failed to generate exam. Please try another PDF.",
+            });
+            setStatus("upload");
         }
-        
-        setExtractedQuestions({ title: file.name, questions: result.questions });
-        setStatus("provide_answer_key");
-        toast({
-          title: "Extraction Complete!",
-          description: `Extracted ${result.questions.length} questions. You can now provide an answer key.`,
-        });
       };
       reader.onerror = () => {
         throw new Error("Failed to read the file.");
@@ -97,23 +107,33 @@ export default function Home() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
-        const pdfDataUri = reader.result as string;
-        const result = await extractAnswerKey({ pdfDataUri });
+        try {
+            const pdfDataUri = reader.result as string;
+            const result = await extractAnswerKey({ pdfDataUri });
 
-        if (!result || !result.answers) {
-          throw new Error("Could not extract any answers from the key.");
+            if (!result || !result.answers) {
+              throw new Error("Could not extract any answers from the key.");
+            }
+            
+            const answerRecord = result.answers.reduce((acc, ans) => {
+                acc[ans.questionNumber] = ans.correctAnswer;
+                return acc;
+            }, {} as Record<number, string>);
+            
+            finalizeExamData(answerRecord);
+            toast({
+                title: "Answer Key Processed!",
+                description: "Your exam is ready to start.",
+            });
+        } catch (e: any) {
+            console.error(e);
+            toast({
+              variant: "destructive",
+              title: "Answer Key Error",
+              description: e.message || "Failed to process answer key. Please provide it manually.",
+            });
+            setStatus("manual_answer_key");
         }
-        
-        const answerRecord = result.answers.reduce((acc, ans) => {
-            acc[ans.questionNumber] = ans.correctAnswer;
-            return acc;
-        }, {} as Record<number, string>);
-        
-        finalizeExamData(answerRecord);
-        toast({
-            title: "Answer Key Processed!",
-            description: "Your exam is ready to start.",
-        });
       };
       reader.onerror = () => {
         throw new Error("Failed to read the answer key file.");
