@@ -17,8 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { SavedExamsDialog } from "@/components/saved-exams-dialog";
 import { ProcessingAnimation } from "@/components/processing-animation";
 import { cn } from "@/lib/utils";
+import { AnswerKeyForm } from "@/components/answer-key-form";
 
-type AppStatus = "upload" | "processing_exam" | "provide_answer_key" | "processing_answers" | "ready" | "exam" | "results";
+type AppStatus = "upload" | "processing_exam" | "provide_answer_key" | "manual_answer_key" | "processing_answers" | "ready" | "exam" | "results";
 
 export default function Home() {
   const [status, setStatus] = useState<AppStatus>("upload");
@@ -57,7 +58,7 @@ export default function Home() {
         setStatus("provide_answer_key");
         toast({
           title: "Extraction Complete!",
-          description: `Extracted ${result.questions.length} questions. You can now provide an answer key or continue.`,
+          description: `Extracted ${result.questions.length} questions. You can now provide an answer key.`,
         });
       };
       reader.onerror = () => {
@@ -80,10 +81,9 @@ export default function Home() {
         title: extractedQuestions.title,
         questions: extractedQuestions.questions.map(q => ({
           ...q,
-          // Default to empty string if no answer is found
           correctAnswer: answers[q.questionNumber] || "",
         })),
-        accuracyAssessment: Object.keys(answers).length > 0 ? "AI-extracted answer key." : "No answer key provided.",
+        accuracyAssessment: Object.keys(answers).length > 0 ? "Provided answer key." : "No answer key provided.",
       };
       setExamData(fullExamData);
       setStatus("ready");
@@ -123,15 +123,14 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Answer Key Error",
-        description: e.message || "Failed to process answer key. Continuing without it.",
+        description: e.message || "Failed to process answer key. Please provide it manually.",
       });
-      // Fallback to continue without answers
-      handleContinueWithoutAnswerKey();
+      setStatus("manual_answer_key");
     }
   };
 
-  const handleContinueWithoutAnswerKey = () => {
-    finalizeExamData();
+  const handleManualAnswerKey = () => {
+    setStatus("manual_answer_key");
   };
 
   const handlePlayNow = () => {
@@ -228,8 +227,16 @@ export default function Home() {
             <ProvideAnswerKey
               questionCount={extractedQuestions.questions.length}
               onUploadKey={handleAnswerKeyUpload}
-              onContinue={handleContinueWithoutAnswerKey}
+              onContinue={handleManualAnswerKey}
             />
+        );
+      case "manual_answer_key":
+        return extractedQuestions && (
+          <AnswerKeyForm
+            title={extractedQuestions.title}
+            extractedQuestions={extractedQuestions.questions}
+            onSubmit={finalizeExamData}
+          />
         );
        case "processing_answers":
         return <ProcessingAnimation />;
@@ -238,9 +245,9 @@ export default function Home() {
           examData && (
             <Card className="w-full max-w-lg mx-auto shadow-lg animate-fade-in">
               <CardHeader>
-                <CardTitle className="text-2xl font-headline text-center">Start Exam?</CardTitle>
+                <CardTitle className="text-2xl font-headline text-center">Exam Ready</CardTitle>
                 <CardDescription className="text-center">
-                  Created a exam with {examData.questions.length} questions from <br /> <strong>{examData.title}</strong>
+                  Created an exam with {examData.questions.length} questions from <br /> <strong>{examData.title}</strong>
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row items-center gap-4 justify-center">
@@ -250,7 +257,7 @@ export default function Home() {
                 </Button>
                 <Button onClick={handleSaveForLater} size="lg" variant="outline" className="w-full sm:w-auto">
                    <Save className="mr-2" />
-                  Save Exam
+                  Save for Later
                 </Button>
               </CardContent>
             </Card>

@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
-import type { ExtractedQuestion } from "@/types/quiz";
+import type { ExtractedQuestion } from "@/types/exam";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -94,7 +93,7 @@ export function AnswerKeyForm({ extractedQuestions, onSubmit, title }: AnswerKey
     onSubmit(answerRecord);
     toast({
         title: "Answer Key Submitted!",
-        description: "Your quiz is now ready to be played or saved.",
+        description: "Your exam is now ready to be played or saved.",
     });
   };
 

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { FileUp, FileKey, ArrowRight } from "lucide-react";
+import { FileKey, Edit } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +48,7 @@ export function ProvideAnswerKey({ questionCount, onUploadKey, onContinue }: Pro
           {questionCount} Questions Extracted
         </CardTitle>
         <CardDescription className="text-center">
-          You can now provide an answer key PDF to enable automatic scoring, or continue without one.
+          Provide an answer key to enable automatic scoring. You can upload a PDF or enter the answers manually.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
@@ -74,17 +74,26 @@ export function ProvideAnswerKey({ questionCount, onUploadKey, onContinue }: Pro
             <p className="text-xs">Drag & drop or click to browse</p>
           </div>
         </div>
-        <div className="w-full flex flex-col sm:flex-row items-center gap-2">
-            <div className="flex-1 text-center text-sm text-muted-foreground my-2 sm:my-0">OR</div>
+        
+        <div className="relative w-full flex items-center justify-center my-2">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">
+                Or
+                </span>
+            </div>
         </div>
+
         <Button
           onClick={onContinue}
           className="w-full"
           size="lg"
           variant="secondary"
         >
-            Continue Without Answer Key
-            <ArrowRight className="ml-2"/>
+            Enter Answers Manually
+            <Edit className="ml-2"/>
         </Button>
       </CardContent>
     </Card>
