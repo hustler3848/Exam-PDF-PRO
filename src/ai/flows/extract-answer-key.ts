@@ -80,6 +80,6 @@ export async function extractAnswerKey(input: ExtractAnswerKeyInput): Promise<Ex
       await new Promise(res => setTimeout(res, 1000 * attempt));
     }
   }
-  // This should not be reached, but typescript needs a return path.
+
   throw new Error("Failed to extract answer key after multiple attempts.");
 }

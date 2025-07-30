@@ -82,6 +82,6 @@ export async function extractExamQuestions(input: ExtractExamQuestionsInput): Pr
       await new Promise(res => setTimeout(res, 1000 * attempt));
     }
   }
-  // This should not be reached, but typescript needs a return path.
+  
   throw new Error("Failed to extract exam questions after multiple attempts.");
 }
