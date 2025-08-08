@@ -21,6 +21,8 @@ import { AnswerKeyForm } from "@/components/answer-key-form";
 
 type AppStatus = "upload" | "processing_exam" | "provide_answer_key" | "manual_answer_key" | "processing_answers" | "ready" | "exam" | "results";
 
+export const maxDuration = 60; // Allow up to 60 seconds for Vercel functions
+
 export default function Home() {
   const [status, setStatus] = useState<AppStatus>("upload");
   const [examData, setExamData] = useState<ExamData | null>(null);
